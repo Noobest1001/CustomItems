@@ -4,9 +4,9 @@
     ".NETFramework,Version=v4.8": {
       "ExMod.Exiled": {
         "type": "Direct",
-        "requested": "[9.5.0, )",
-        "resolved": "9.5.0",
-        "contentHash": "enAtwySPTIoqBDP+HWqmfqnycy4xxSG7nD+e28V4pgmlvYOT8fHo2yNVJMeB4puSqlyYbDk02UjEKS1Z8Eb/+A=="
+        "requested": "[9.13.3, )",
+        "resolved": "9.13.3",
+        "contentHash": "ZNIBIjsYHBO61FV2WUA2Oa7o8700kDCGqyEomIM60k5V6pDz/UgNK2wrwTH016zOL/hW1VJ4Krp0PxnWFOM6ww=="
       },
       "Microsoft.NETFramework.ReferenceAssemblies": {
         "type": "Direct",

@@ -8,8 +8,6 @@ using Exiled.CustomItems.API.Features;
 using Exiled.Events.EventArgs.Player;
 using InventorySystem.Items.Firearms.Attachments;
 
-using E = ExtendedItems.Utils;
-
 
 namespace ExtendedItems.Items
 {
@@ -17,9 +15,9 @@ namespace ExtendedItems.Items
     [CustomItem(ItemType.GunLogicer)]
     public class GrenadeLauncher : CustomWeapon
     {
-        public override uint Id { get; set; } = 805;
+        public override uint Id { get; set; } = 2;
         public override string Name { get; set; } = "Grenade Launcher";
-        public override string Description { get; set; } = "A modified Chaos Insergency LMG that fires High Explisove Grenades";
+        public override string Description { get; set; } = "A modified Chaos Insurgency LMG that fires High Explosive Grenades";
         public override float Weight { get; set; } = 10f;
 
         public override float Damage { get; set; } = 0f;
@@ -32,7 +30,7 @@ namespace ExtendedItems.Items
             Limit = 1,
             DynamicSpawnPoints =
             [
-                new()
+                new DynamicSpawnPoint
                 {
                     Chance = 100,
                     Location = SpawnLocationType.InsideHidChamber,
@@ -43,7 +41,7 @@ namespace ExtendedItems.Items
         protected override void OnShooting(ShootingEventArgs ev)
         {
             var throwable = ev.Player.ThrowGrenade(ProjectileType.FragGrenade);
-            ushort ammo = E.Subtrat((ushort)ev.Firearm.MagazineAmmo);
+            ushort ammo = (ushort)(ev.Firearm.MagazineAmmo - 1);
             throwable.Projectile.GameObject.AddComponent<CollisionHandler>().Init(ev.Player.GameObject, throwable.Projectile.Base);
             ev.Firearm.MagazineAmmo = 0;
             ev.Firearm.BarrelAmmo = 0;
@@ -73,7 +71,7 @@ namespace ExtendedItems.Items
             for (; ; )
             {
                 float comp = -2;
-                var yVelocity = throwable.Projectile.Rigidbody.velocity.y - comp;
+                var yVelocity = throwable.Projectile.Rigidbody.linearVelocity.y - comp;
                 Log.Info(yVelocity);
             }
         }

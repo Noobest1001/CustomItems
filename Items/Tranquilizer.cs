@@ -20,7 +20,7 @@ namespace ExtendedItems.Items
     [CustomItem(ItemType.GunCOM15)]
     public class Tranquilizer : CustomWeapon {
         public override string Name { get; set; } = "Tranquilizer";
-        public override uint Id { get; set; } = 801;
+        public override uint Id { get; set; } = 6;
 
         public override string Description { get; set; } = "A gun that temporarily tranquilizes entities; might be unreliable.";
 
@@ -29,16 +29,16 @@ namespace ExtendedItems.Items
         public override byte ClipSize { get; set; } = 3;
 
         [Description("Whether the tranquilizer is effective on SCP-173.")]
-        public bool EffectiveOn173 { get; set; } = false;
+        private bool EffectiveOn173 { get; set; } = false;
 
         [Description("The effectiveness of tranquilizer on SCPs in decimal percentage.")]
-        public float ScpChance { get; set; } = 0.5f;
+        private float ScpChance { get; set; } = 0.5f;
 
         [Description("The effectiveness of tranquilizer on humans in decimal percentage.")]
-        public float HumanChance { get; set; } = 0.75f;
+        private float HumanChance { get; set; } = 0.75f;
 
         [Description("Resistance to remove from the chance after being shot.")]
-        public float Resistance { get; set; } = 0.05f;
+        private float Resistance { get; set; } = 0.05f;
 
         [YamlIgnore] private readonly Random _rng = new();
         [YamlIgnore] private readonly Dictionary<uint, float> _resistances = new();
@@ -54,26 +54,31 @@ namespace ExtendedItems.Items
 
         protected override void SubscribeEvents() 
         {
-        PlayerEvents.ChangingRole += OnChangingRole;
-        base.SubscribeEvents();
+            PlayerEvents.ChangingRole += OnChangingRole;
+            base.SubscribeEvents();
         }
 
         protected override void UnsubscribeEvents() 
         {
-        PlayerEvents.ChangingRole -= OnChangingRole;
-        base.UnsubscribeEvents();
+            PlayerEvents.ChangingRole -= OnChangingRole;
+            base.UnsubscribeEvents();
         }
 
         private void OnChangingRole(ChangingRoleEventArgs ev) 
         {
-        if (!_resistances.ContainsKey(ev.Player.NetId)) return;
-        _resistances[ev.Player.NetId] = 0;
+            if (!_resistances.ContainsKey(ev.Player.NetId)) return;
+            _resistances[ev.Player.NetId] = 0;
         }
 
         protected override void OnShot(ShotEventArgs ev) 
         {
             if (ev.Target == null) return;
 
+            if (AlphaWarheadController.TimeUntilDetonation <= 15 && Plugin.Instance.Config.NukeTranq)
+            {
+                return;
+            }
+            
             var rand = _rng.NextDouble();
             _resistances.TryGetValue(ev.Target.NetId, out float tResistance);
             var effective = ev.Target.IsScp ? rand < ScpChance - tResistance : rand < HumanChance - tResistance;
@@ -88,6 +93,7 @@ namespace ExtendedItems.Items
             ev.Target.EnableEffect(EffectType.Ensnared, byte.MaxValue);
             ev.Target.EnableEffect(EffectType.Flashed, byte.MaxValue);
             ev.Target.EnableEffect(EffectType.Deafened, byte.MaxValue);
+            ev.Target.EnableEffect(EffectType.DamageReduction, 50);
             Ragdoll? ragdoll = null;
             if (ev.Target.Role != RoleTypeId.Scp106)
             {

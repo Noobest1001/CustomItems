@@ -6,7 +6,6 @@ using Exiled.Events.EventArgs.Item;
 using Exiled.Events.EventArgs.Player;
 using InventorySystem.Items.Firearms.Attachments;
 using YamlDotNet.Serialization;
-using UnityEngine;
 using ItemEvents = Exiled.Events.Handlers.Item;
 
 namespace ExtendedItems.Items
@@ -14,7 +13,7 @@ namespace ExtendedItems.Items
     [CustomItem(ItemType.GunE11SR)]
     public class Sniper : CustomWeapon
     {
-        public override uint Id { get; set; } = 802;
+        public override uint Id { get; set; } = 5;
         public override string Name { get; set; } = "SR-119";
 
         public override string Description { get; set; } = "A modified E-11 that fires 5.56 at supersonic velocity that deals significantly more damage";
@@ -65,9 +64,10 @@ namespace ExtendedItems.Items
 
         private void OnChangingAttachments(ChangingAttachmentsEventArgs ev)
         {
-            if (!Check(ev.Item) || ev.Player.NetId < 2) return;
-            ev.IsAllowed = false;
+            if (!Check(ev.Item)) return;
+            var temp = ev.CurrentAttachmentIdentifiers.ToList();
             ev.Player.ShowHint("You are not allowed to change the attachment for this weapon.");
+            ev.NewAttachmentIdentifiers = temp;
         }
     }
 }

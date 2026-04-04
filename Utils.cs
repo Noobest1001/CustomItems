@@ -1,73 +1,82 @@
-﻿using Exiled.API.Enums;
+﻿using System.ComponentModel;
+using Exiled.API.Enums;
 using Exiled.API.Features;
+using Exiled.API.Features.Items;
+using PlayerRoles;
 using UnityEngine;
+using EP = Exiled.API.Features.Player;
 
 namespace ExtendedItems
 {
-    public static class Utils {
+    public static class Utils
+    {
+
+        public static ushort[] Snipers = [];
+        
         /// <summary>
-        /// 
+        /// Calculates the global coords of a point inside a room based on the room type and the location
         /// </summary>
         /// <param name="roomType"></param>
         /// <param name="localPos"></param>
-        /// <returns></returns>
-        public static Vector3 GetGlobalCords(RoomType roomType, Vector3 localPos) {
+        /// <returns>Vector3</returns>
+        public static Vector3 GetGlobalCords(RoomType roomType, Vector3 localPos)
+        {
             var room = Room.Get(roomType);
+
             var rotation = room.Rotation;
             var roomPos = room.Position;
-            if (Math.Abs(rotation.eulerAngles.y) < 1.0)
-            return new Vector3(roomPos.x + localPos.x, roomPos.y + localPos.y, roomPos.z + localPos.z);
-            if (Math.Abs(rotation.eulerAngles.y - 90f) < 1.0)
-            return new Vector3(roomPos.x + localPos.z, roomPos.y + localPos.y, roomPos.z - localPos.x);
-            if (Math.Abs(rotation.eulerAngles.y - 180f) < 1.0)
-            return new Vector3(roomPos.x - localPos.x, roomPos.y + localPos.y, roomPos.z - localPos.z);
-            if (Math.Abs(rotation.eulerAngles.y - 270f) < 1.0)
-            return new Vector3(roomPos.x - localPos.z, roomPos.y + localPos.y, roomPos.z + localPos.x);
-            return Vector3.zero;
-        }
 
-        /// <summary>
-        /// Trys to remove an item from a players inventory
-        /// returns true if the item was removed
-        /// </summary>
-        /// <param name="player"></param>
-        /// <param name="item"></param>
-        /// <param name="minimum"></param>
-        /// <example> 
-        /// if(Utils.TryRemoveItem(ev.Player, ItemType.GrenadeHE))
-        /// </example>
-        /// <returns>bool</returns>
-        /// <seealso>
-        /// Redundant method
-        /// </seealso>
-        public static bool TryRemoveItem(Player player, ItemType item, short minimum = 0)
-        {
-            if (player.CountItem(item) > minimum)
+            var offsetY = Math.Round(Math.Abs(rotation.eulerAngles.y / 90f));
+
+            return offsetY switch
             {
-                player.RemoveItem(player.Items.First(it => it.Type == item)); 
-                return true;
-            }
-            return false;
+                0 => new Vector3(roomPos.x + localPos.x, roomPos.y + localPos.y, roomPos.z + localPos.z),
+                1 => new Vector3(roomPos.x + localPos.z, roomPos.y + localPos.y, roomPos.z - localPos.x),
+                2 => new Vector3(roomPos.x - localPos.x, roomPos.y + localPos.y, roomPos.z - localPos.z),
+                3 => new Vector3(roomPos.x - localPos.z, roomPos.y + localPos.y, roomPos.z + localPos.x),
+                _ => Vector3.zero,
+            };
         }
 
         /// <summary>
-        /// Subtracts 1 from any ushort number
+        ///     Removes 1 from an ushort (I hate this language sometimes)
         /// </summary>
         /// <param name="input"></param>
-        /// <returns></returns>
-        public static ushort Subtrat(ushort input)
+        /// <param name="mask"></param>
+        /// <returns>input - 1</returns>
+        // I want someone to double-check this before it goes into full prod
+        public static ushort Subtract(ushort input, int mask = 1)
         {
             int temp = input;
-            int m = 1;
-
-            while (!((temp & m) > 0))
+            while (!((temp & mask) > 0))
             {
-                temp ^= m;
-                m <<= 1;
+                temp ^= mask;
+                mask <<= 1;
             }
 
-            temp ^= m;
+            temp ^= mask;
             return (ushort)temp;
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static bool PDWarning(EP player)
+        {
+            return (from actEffects in player.ActiveEffects
+                    let Larry = EP.List.First(L => L.Role == RoleTypeId.Scp106).Position
+                    select actEffects.name == "Corroding" && Plugin.Instance != null &&
+                           Vector3.Distance(player.Position, Larry) < Plugin.Instance.Config.LarryDistance).FirstOrDefault();
+        }
+
+        public static void Exploding(EP player)
+        {
+            var grenade = (ExplosiveGrenade)Item.Create(ItemType.GrenadeHE);
+            grenade.FuseTime = 0.1f;
+            grenade.SpawnActive(player.Position + new Vector3(0, 1, 0), player);
+        }
+
+        public static bool HasEffect(EP player, EffectType effect)
+        {
+            return !Enum.IsDefined(typeof(EffectType), effect) ? throw new InvalidEnumArgumentException(nameof(effect), (int)effect, typeof(EffectType)) : player.ActiveEffects.Any(targetActiveEffect => targetActiveEffect.name == nameof(effect));
         }
     }
 }

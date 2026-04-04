@@ -1,28 +1,54 @@
-﻿using Exiled.API.Features;
+﻿using Discord;
+using Exiled.API.Features;
 using Exiled.CustomItems.API.Features;
+using Exiled.Events.EventArgs.Item;
+using UnityEngine;
+using UserSettings.ServerSpecific;
 
 namespace ExtendedItems
 {
-    public class Plugin : Plugin<Config> 
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class Plugin : Plugin<Config>
     {
-        public override string Prefix => "Cactus Patch";
-        public override string Name => "Extended Items";
-        public override string Author => "Noobest1001";
-        public override Version Version => new(3, 0, 4);
-        public override Version RequiredExiledVersion => new(9, 5, 0);
         public static Plugin? Instance;
 
-        public override void OnEnabled() {
+        private List<ServerSpecificSettingBase>? _settings;
+        public override string Prefix => "Extended Items";
+        public override string Name => "Extended Items";
+        public override string Author => "Noobest1001";
+        public override Version Version => new(4, 0, 0, 0);
+        public override Version RequiredExiledVersion => new(9, 7, 0);
+
+        public override void OnEnabled()
+        {
             Instance = this;
-            Log.Info("Registering items");
+            
+            SSSS.Register();
+
+            Log.Send("Registering items", LogLevel.Info, ConsoleColor.DarkYellow);
             CustomItem.RegisterItems(overrideClass: Config);
+
+            _settings =
+            [
+                new SSGroupHeader(10, "Extended Items"),
+                new SSKeybindSetting(24, "C4 Detonation", KeyCode.Delete, hint: "Explodes all C4 placed by you"),
+            ];
+
+            ServerSpecificSettingsSync.DefinedSettings = _settings.ToArray();
+            
             base.OnEnabled();
         }
 
-        public override void OnDisabled() {
-            Instance = null;
-            Log.Info("Unregistering items");
+        public override void OnDisabled()
+        {
+            Log.Send("Unregistering items", LogLevel.Info, ConsoleColor.DarkYellow);
             CustomItem.UnregisterItems();
+
+            SSSS.Unregister();
+
+            _settings = null;
+            Instance = null;
+
             base.OnDisabled();
         }
     }
